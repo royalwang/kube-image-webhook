@@ -13,6 +13,11 @@ The application itself doesn't require `cluster-admin`, however the MutatingWebh
 
 If you are in an environment with restricted permissions, you may separate the MWC and application deployment and ask your administrators to manage the MWC.
 
+### Cert Manager
+
+The webhook expects Cert Manager to be installed so that it can offload creation and management of TLS certificates.
+If you are unable to use Cert Manager for any reason, you should manually manage the MutatingWebhookConfiguration.
+
 ## Configuration
 
 Configuration is controlled via a YAML file provided to the application.
