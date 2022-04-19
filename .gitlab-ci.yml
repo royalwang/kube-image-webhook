@@ -3,5 +3,8 @@ variables:
   BUILD_KANIKO_DISABLED: "true"
   DEPLOY_DISABLED: "true"
 
+autobuild golang:
+  tags: []
+
 include:
   - remote: 'https://gitlab.dcas.dev/open-source/gitlab-ci-templates/-/raw/master/auto/Auto-GoMod.gitlab-ci.yml'
