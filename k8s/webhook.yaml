@@ -1,0 +1,32 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: kube-image
+  annotations:
+    cert-manager.io/inject-ca-from: "kube-image/kube-image"
+webhooks:
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      service:
+        name: kube-image
+        namespace: kube-image
+        path: /mutate
+        port: 443
+    name: kube-image-mutate.dcas.dev
+    sideEffects: NoneOnDryRun
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: default
+    objectSelector: {}
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - pods
+        scope: "*"

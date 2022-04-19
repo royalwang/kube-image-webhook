@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-image
+  labels:
+    app.kubernetes.io/name: kube-image
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-image
+  template:
+    metadata:
+      annotations:
+        app.kubernetes.io/name: kube-image
+      labels:
+        app.kubernetes.io/name: kube-image
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+        runAsNonRoot: true
+        runAsUser: 123456
+        runAsGroup: 0
+      containers:
+        - name: kube-image
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          image: dev.local/kube-image-webhook
+          imagePullPolicy: Never
+          env:
+            - name: WEBHOOK_CONFIG_PATH
+              value: /var/run/config/config.yaml
+            - name: WEBHOOK_TLS_CERT
+              value: /etc/webhook/certs/tls.crt
+            - name: WEBHOOK_TLS_KEY
+              value: /etc/webhook/certs/tls.key
+          ports:
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          volumeMounts:
+            - mountPath: /etc/webhook/certs
+              name: certs
+              readOnly: true
+            - mountPath: /var/run/config
+              name: config
+              readOnly: true
+      volumes:
+        - name: certs
+          secret:
+            optional: false
+            secretName: kube-image-tls
+        - name: config
+          configMap:
+            name: kube-image

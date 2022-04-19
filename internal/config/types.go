@@ -5,6 +5,6 @@ type Config struct {
 }
 
 type Image struct {
-	Source      string
-	Destination string
+	Source      string `yaml:"source"`
+	Destination string `yaml:"destination"`
 }

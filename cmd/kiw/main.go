@@ -18,7 +18,7 @@ import (
 )
 
 type environment struct {
-	Port int `envconfig:"PORT" default:"8080"`
+	Port int `envconfig:"PORT" default:"8443"`
 
 	ConfigPath string `split_words:"true"`
 
@@ -46,7 +46,7 @@ func main() {
 	// setup services
 	svc := webhook.NewImageWebhook(conf)
 	wh, err := mutating.NewWebhook(mutating.WebhookConfig{
-		ID:      "image-mutate",
+		ID:      "kube-image-mutate",
 		Mutator: svc,
 		Obj:     &corev1.Pod{},
 		Logger:  logger,

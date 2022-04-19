@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kube-image
+data:
+  config.yaml: |
+    images:
+      - source: index.docker.io
+        destination: harbor.dcas.dev/docker.io
+      - source: quay.io
+        destination: harbor.dcas.dev/quay.io

@@ -1,0 +1,22 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kube-image
+spec:
+  secretName: kube-image-tls
+  duration: 2160h
+  renewBefore: 360h
+  isCA: false
+  dnsNames:
+    - "kube-image"
+    - "kube-image.kube-image"
+    - "kube-image.kube-image.svc"
+    - "kube-image.kube-image.svc.cluster"
+    - "kube-image.kube-image.svc.cluster.local"
+  privateKey:
+    algorithm: ECDSA
+  usages:
+    - server auth
+  issuerRef:
+    name: iss-kube
+    kind: ClusterIssuer

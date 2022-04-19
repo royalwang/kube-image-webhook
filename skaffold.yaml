@@ -1,0 +1,21 @@
+apiVersion: skaffold/v2beta27
+kind: Config
+metadata:
+  name: kube-image
+build:
+  artifacts:
+    - image: dev.local/kube-image-webhook
+      buildpacks:
+        builder: harbor.dcas.dev/docker.io/paketobuildpacks/builder:tiny
+        runImage: harbor.dcas.dev/docker.io/paketobuildpacks/run:tiny-cnb
+        dependencies:
+          paths:
+            - cmd/kiw/
+            - internal/
+  local:
+    push: false
+deploy:
+  kubectl:
+    defaultNamespace: kube-image
+    manifests: ["k8s/*.yaml"]
+  kubeContext: minikube
