@@ -63,6 +63,10 @@ func TestImageWebhook_normaliseImage(t *testing.T) {
 			"",
 			"",
 		},
+		{
+			"docker.io/ubuntu",
+			"index.docker.io/library/ubuntu:latest",
+		},
 	}
 	wh := &ImageWebhook{}
 	for _, tt := range cases {
