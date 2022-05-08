@@ -1,20 +1,22 @@
 package config
 
 import (
-	log "github.com/sirupsen/logrus"
+	"context"
+	"github.com/go-logr/logr"
 	"gopkg.in/yaml.v3"
 	"os"
 )
 
-func Get(path string) (*Config, error) {
-	log.Infof("reading config file: %s", path)
+func Get(ctx context.Context, path string) (*Config, error) {
+	log := logr.FromContextOrDiscard(ctx).WithValues("Path", path)
+	log.Info("reading config file")
 	f, err := os.Open(path)
 	if err != nil {
-		log.WithError(err).Error("failed to read file")
+		log.Error(err, "failed to read file")
 	}
 	var c Config
 	if err := yaml.NewDecoder(f).Decode(&c); err != nil {
-		log.WithError(err).Error("failed to decode yaml")
+		log.Error(err, "failed to decode yaml")
 		return nil, err
 	}
 	return &c, nil

@@ -1,16 +1,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/djcass44/go-utils/logging"
 	"github.com/gorilla/mux"
 	"github.com/kelseyhightower/envconfig"
-	log "github.com/sirupsen/logrus"
 	whhttp "github.com/slok/kubewebhook/v2/pkg/http"
-	"github.com/slok/kubewebhook/v2/pkg/log/logrus"
 	"github.com/slok/kubewebhook/v2/pkg/webhook/mutating"
 	"gitlab.com/autokubeops/kube-image-webhook/internal/config"
+	"gitlab.com/autokubeops/kube-image-webhook/internal/logr"
 	"gitlab.com/autokubeops/kube-image-webhook/internal/webhook"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
+	stdlog "log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,6 +26,10 @@ type environment struct {
 
 	ConfigPath string `split_words:"true"`
 
+	Log struct {
+		Level int `split_words:"true"`
+	}
+
 	TLS struct {
 		Cert string `split_words:"true" required:"true"`
 		Key  string `split_words:"true" required:"true"`
@@ -31,37 +39,44 @@ type environment struct {
 func main() {
 	var e environment
 	if err := envconfig.Process("webhook", &e); err != nil {
-		log.WithError(err).Fatal("failed to read environment")
+		stdlog.Fatal("failed to read environment")
 		return
 	}
-	logger := logrus.NewLogrus(log.NewEntry(log.StandardLogger()))
+	zc := zap.NewProductionConfig()
+	zc.Level = zap.NewAtomicLevelAt(zapcore.Level(e.Log.Level * -1))
+	log, ctx := logging.NewZap(context.TODO(), zc)
+
+	whlogger := logr.NewLogger(log)
 
 	// load config
-	conf, err := config.Get(e.ConfigPath)
+	conf, err := config.Get(ctx, e.ConfigPath)
 	if err != nil {
-		log.WithError(err).Fatal("failed to read config")
+		log.Error(err, "failed to read config")
+		os.Exit(1)
 		return
 	}
 
 	// setup services
-	svc := webhook.NewImageWebhook(conf)
+	svc := webhook.NewImageWebhook(log, conf)
 	wh, err := mutating.NewWebhook(mutating.WebhookConfig{
 		ID:      "kube-image-mutate",
 		Mutator: svc,
 		Obj:     &corev1.Pod{},
-		Logger:  logger,
+		Logger:  whlogger,
 	})
 	if err != nil {
-		log.WithError(err).Fatal("failed to setup webhook")
+		log.Error(err, "failed to setup webhook")
+		os.Exit(1)
 		return
 	}
 	// create a http handler
 	handler, err := whhttp.HandlerFor(whhttp.HandlerConfig{
 		Webhook: wh,
-		Logger:  logger,
+		Logger:  whlogger,
 	})
 	if err != nil {
-		log.WithError(err).Fatal("failed to setup webhook handler")
+		log.Error(err, "failed to setup webhook handler")
+		os.Exit(1)
 		return
 	}
 
@@ -75,13 +90,16 @@ func main() {
 	// start the server
 	go func() {
 		addr := fmt.Sprintf(":%d", e.Port)
-		log.WithField("addr", addr).Info("starting http server")
-		log.Fatal(http.ListenAndServeTLS(addr, e.TLS.Cert, e.TLS.Key, router))
+		log.Info("starting http server", "Addr", addr)
+		if err := http.ListenAndServeTLS(addr, e.TLS.Cert, e.TLS.Key, router); err != nil {
+			log.Error(err, "http server exited")
+			os.Exit(1)
+		}
 	}()
 
 	// wait for a signal
 	sigC := make(chan os.Signal, 1)
 	signal.Notify(sigC, syscall.SIGTERM, syscall.SIGINT)
 	sig := <-sigC
-	log.Printf("received SIGTERM/SIGINT (%s), shutting down...", sig)
+	log.Info("received SIGTERM/SIGINT (%s), shutting down...", "Signal", sig)
 }

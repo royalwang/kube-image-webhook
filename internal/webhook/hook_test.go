@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"context"
+	"github.com/go-logr/logr/testr"
 	"github.com/stretchr/testify/assert"
 	"gitlab.com/autokubeops/kube-image-webhook/internal/config"
 	corev1 "k8s.io/api/core/v1"
@@ -9,7 +10,7 @@ import (
 )
 
 func TestImageWebhook_Mutate(t *testing.T) {
-	wh := NewImageWebhook(&config.Config{
+	wh := NewImageWebhook(testr.New(t), &config.Config{
 		Images: []config.Image{
 			{
 				"index.docker.io",
@@ -68,13 +69,13 @@ func TestImageWebhook_normaliseImage(t *testing.T) {
 			"index.docker.io/library/ubuntu:latest",
 		},
 	}
-	wh := &ImageWebhook{}
+	wh := NewImageWebhook(testr.New(t), &config.Config{})
 	for _, tt := range cases {
 		t.Run(tt.in, func(t *testing.T) {
 			container := &corev1.Container{
 				Image: tt.in,
 			}
-			wh.normaliseImage(context.TODO(), container)
+			wh.normaliseImage(container)
 			assert.EqualValues(t, tt.out, container.Image)
 		})
 	}
@@ -118,14 +119,14 @@ func TestImageWebhook_replaceImage(t *testing.T) {
 			"",
 		},
 	}
-	wh := NewImageWebhook(conf)
+	wh := NewImageWebhook(testr.New(t), conf)
 	for _, tt := range cases {
 		t.Run(tt.in, func(t *testing.T) {
 			container := &corev1.Container{
 				Image: tt.in,
 			}
-			wh.normaliseImage(context.TODO(), container)
-			wh.replaceImage(context.TODO(), container)
+			wh.normaliseImage(container)
+			wh.replaceImage(container)
 			assert.EqualValues(t, tt.out, container.Image)
 		})
 	}
