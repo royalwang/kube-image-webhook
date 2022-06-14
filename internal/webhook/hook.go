@@ -77,7 +77,6 @@ func (w *ImageWebhook) replaceImage(container *corev1.Container) {
 			dst := strings.ReplaceAll(container.Image, i.Source, i.Destination)
 			log.Info("rewrote image reference", "Original", container.Image, "Current", dst)
 			container.Image = dst
-			return
 		}
 	}
 }

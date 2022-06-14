@@ -34,12 +34,12 @@ func (l logger) Debugf(format string, args ...interface{}) {
 }
 
 func (l logger) WithValues(values map[string]interface{}) log.Logger {
-	var kv []string
+	var kv []any
 	for k, v := range values {
 		kv = append(kv, k)
 		kv = append(kv, fmt.Sprintf("%v", v))
 	}
-	newLogger := l.log.WithValues(kv)
+	newLogger := l.log.WithValues(kv...)
 	return NewLogger(newLogger)
 }
 

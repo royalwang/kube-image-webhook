@@ -41,6 +41,21 @@ This means that the `index.docker.io` source will rewrite the following images:
 * `bitnami/postgresql`
 * `docker.io/ubuntu`
 
+### Chaining
+
+The webhook applies mutation in the order that you define, so you can chain mutations together.
+For example:
+
+```yaml
+images:
+  - source: index.docker.io
+    destination: docker.example.org
+  - source: docker.example.org/foobar
+    destination: some-internal-registry:5000/foobar/zoo
+```
+
+If you attempt to pull `foobar/app:latest`, it will end up as `some-internal-registry:5000/foobar/zoo/app:latest`
+
 ## Testing
 
 Requires the following:

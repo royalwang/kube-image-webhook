@@ -92,6 +92,14 @@ func TestImageWebhook_replaceImage(t *testing.T) {
 				Source:      "public.ecr.aws",
 				Destination: "harbor.example.org/public.ecr.aws",
 			},
+			{
+				Source:      "registry.redhat.io",
+				Destination: "registry.access.redhat.com",
+			},
+			{
+				Source:      "registry.access.redhat.com/openshift4/ose-kube-rbac-proxy:v4.8",
+				Destination: "gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0",
+			},
 		},
 	}
 	var cases = []struct {
@@ -117,6 +125,10 @@ func TestImageWebhook_replaceImage(t *testing.T) {
 		{
 			"",
 			"",
+		},
+		{
+			"registry.redhat.io/openshift4/ose-kube-rbac-proxy:v4.8",
+			"gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0",
 		},
 	}
 	wh := NewImageWebhook(testr.New(t), conf)
